@@ -1,5 +1,7 @@
 use std::io::{self, Write};
 
+mod parser;
+
 fn main() {
     println!("Little Scheme In Rust");
 
