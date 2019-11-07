@@ -8,17 +8,36 @@ enum LexToken {
 }
 
 fn lex_input(input: &str) -> Result<Vec<LexToken>, &'static str> {
-    Ok(vec![
-        LexToken::LeftBracket,
-        LexToken::Symbol("repeat".to_string()),
-        LexToken::String("scheme".to_string()),
-        LexToken::LeftBracket,
-        LexToken::Symbol("+".to_string()),
-        LexToken::Num(1.0),
-        LexToken::Num(2.0),
-        LexToken::RightBracket,
-        LexToken::RightBracket,
-    ])
+    let mut output = Vec::new();
+
+    let input_length = input.len();
+    let mut current_idx = 0;
+
+    while current_idx < input_length {
+        if let Some((lexed_string, new_idx)) = lex_string(&input, current_idx) {
+            output.push(LexToken::String(lexed_string));
+            current_idx = new_idx;
+            continue;
+        }
+
+        current_idx += 1;
+    }
+
+    Ok(output)
+}
+
+fn lex_string(input: &str, from_idx: usize) -> Option<(String, usize)> {
+    if input.chars().nth(from_idx).unwrap() != '"' {
+        return None;
+    }
+
+    let output = input
+        .chars()
+        .skip(from_idx + 1)
+        .take_while(|&char| char != '"')
+        .collect::<String>();
+
+    Some((output.to_string(), from_idx + output.len() + 2))
 }
 
 #[cfg(test)]
@@ -26,20 +45,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn lex_simple_expression() {
-        let input = "(repeat \"scheme\" (+ 1 2))";
+    fn lex_string() {
+        let input = "\"scheme\"";
 
-        let expected_output = vec![
-            LexToken::LeftBracket,
-            LexToken::Symbol("repeat".to_string()),
-            LexToken::String("scheme".to_string()),
-            LexToken::LeftBracket,
-            LexToken::Symbol("+".to_string()),
-            LexToken::Num(1.0),
-            LexToken::Num(2.0),
-            LexToken::RightBracket,
-            LexToken::RightBracket,
-        ];
+        let expected_output = vec![LexToken::String("scheme".to_string())];
 
         let actual_output = lex_input(&input).unwrap();
 
