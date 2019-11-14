@@ -20,6 +20,12 @@ fn lex_input(input: &str) -> Result<Vec<LexToken>, &'static str> {
             continue;
         }
 
+        if let Some((lexed_number, new_idx)) = lex_number(&input, current_idx) {
+            output.push(lexed_number);
+            current_idx = new_idx;
+            continue;
+        }
+
         if let Some((lexed_left_bracket, new_idx)) = lex_left_bracket(&input, current_idx) {
             output.push(lexed_left_bracket);
             current_idx = new_idx;
@@ -76,6 +82,23 @@ fn lex_whitespace(input: &str, from_idx: usize) -> usize {
     from_idx
 }
 
+fn lex_number(input: &str, from_idx: usize) -> Option<(LexToken, usize)> {
+    let next_char = input.chars().nth(from_idx).unwrap();
+    if !next_char.is_numeric() && next_char != '-' && next_char != '.' {
+        return None;
+    }
+
+    let num_as_string = input
+        .chars()
+        .skip(from_idx)
+        .take_while(|&char| char.is_numeric() || char == '.' || char == 'e' || char == '-')
+        .collect::<String>();
+
+    let output = num_as_string.parse::<f64>().unwrap();
+
+    Some((LexToken::Num(output), from_idx + num_as_string.len()))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -126,6 +149,38 @@ mod tests {
             LexToken::LeftBracket,
             LexToken::String("little".to_string()),
             LexToken::String("scheme".to_string()),
+            LexToken::RightBracket,
+        ];
+
+        let actual_output = lex_input(&input).unwrap();
+
+        assert_eq!(actual_output, expected_output);
+    }
+
+    #[test]
+    fn lex_number() {
+        let tests = vec![
+            ("123", LexToken::Num(123f64)),
+            ("0.123", LexToken::Num(0.123f64)),
+            ("-0.1e-5", LexToken::Num(-0.1e-5f64))
+        ];
+
+        for (input, expect) in tests {
+            let expected_output = vec![expect];
+            let actual_output = lex_input(&input).unwrap();
+            assert_eq!(actual_output, expected_output);
+        }
+    }
+
+    #[test]
+    fn lex_list_of_numbers() {
+        let input = "(123 0.123 -0.1e-5)";
+
+        let expected_output = vec![
+            LexToken::LeftBracket,
+            LexToken::Num(123f64),
+            LexToken::Num(0.123f64),
+            LexToken::Num(-0.1e-5f64),
             LexToken::RightBracket,
         ];
 
