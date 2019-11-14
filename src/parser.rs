@@ -55,7 +55,10 @@ fn lex_string(input: &str, from_idx: usize) -> Option<(LexToken, usize)> {
         .take_while(|&char| char != '"')
         .collect::<String>();
 
-    Some((LexToken::String(output.to_string()), from_idx + output.len() + 2))
+    Some((
+        LexToken::String(output.to_string()),
+        from_idx + output.len() + 2,
+    ))
 }
 
 fn lex_left_bracket(input: &str, from_idx: usize) -> Option<(LexToken, usize)> {
@@ -162,7 +165,7 @@ mod tests {
         let tests = vec![
             ("123", LexToken::Num(123f64)),
             ("0.123", LexToken::Num(0.123f64)),
-            ("-0.1e-5", LexToken::Num(-0.1e-5f64))
+            ("-0.1e-5", LexToken::Num(-0.1e-5f64)),
         ];
 
         for (input, expect) in tests {
