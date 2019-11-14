@@ -32,7 +32,7 @@ fn lex_input(input: &str) -> Result<Vec<LexToken>, &'static str> {
             continue;
         }
 
-        current_idx += 1;
+        current_idx = lex_whitespace(&input, current_idx);
     }
 
     Ok(output)
@@ -68,6 +68,14 @@ fn lex_right_bracket(input: &str, from_idx: usize) -> Option<(LexToken, usize)> 
     Some((LexToken::RightBracket, from_idx + 1))
 }
 
+fn lex_whitespace(input: &str, from_idx: usize) -> usize {
+    if input.chars().nth(from_idx).unwrap().is_whitespace() {
+        return from_idx + 1;
+    }
+
+    from_idx
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -97,6 +105,22 @@ mod tests {
     #[test]
     fn lex_list_of_strings() {
         let input = "(\"little\" \"scheme\")";
+
+        let expected_output = vec![
+            LexToken::LeftBracket,
+            LexToken::String("little".to_string()),
+            LexToken::String("scheme".to_string()),
+            LexToken::RightBracket,
+        ];
+
+        let actual_output = lex_input(&input).unwrap();
+
+        assert_eq!(actual_output, expected_output);
+    }
+
+    #[test]
+    fn lex_list_of_strings_with_whitespace() {
+        let input = "  (  \"little\"   \"scheme\"  )  ";
 
         let expected_output = vec![
             LexToken::LeftBracket,
