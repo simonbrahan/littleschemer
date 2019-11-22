@@ -158,9 +158,7 @@ mod tests {
 
         let expected_output = vec![LexToken::LeftBracket, LexToken::RightBracket];
 
-        let actual_output = lex_input(&input).unwrap();
-
-        assert_eq!(actual_output, expected_output);
+        compare(input, expected_output);
     }
 
     #[test]
@@ -169,9 +167,7 @@ mod tests {
 
         let expected_output = vec![LexToken::String("scheme".to_string())];
 
-        let actual_output = lex_input(&input).unwrap();
-
-        assert_eq!(actual_output, expected_output);
+        compare(input, expected_output);
     }
 
     #[test]
@@ -185,9 +181,7 @@ mod tests {
             LexToken::RightBracket,
         ];
 
-        let actual_output = lex_input(&input).unwrap();
-
-        assert_eq!(actual_output, expected_output);
+        compare(input, expected_output);
     }
 
     #[test]
@@ -201,9 +195,7 @@ mod tests {
             LexToken::RightBracket,
         ];
 
-        let actual_output = lex_input(&input).unwrap();
-
-        assert_eq!(actual_output, expected_output);
+        compare(input, expected_output);
     }
 
     #[test]
@@ -215,9 +207,7 @@ mod tests {
         ];
 
         for (input, expect) in tests {
-            let expected_output = vec![expect];
-            let actual_output = lex_input(&input).unwrap();
-            assert_eq!(actual_output, expected_output);
+            compare(input, vec![expect]);
         }
     }
 
@@ -233,9 +223,7 @@ mod tests {
             LexToken::RightBracket,
         ];
 
-        let actual_output = lex_input(&input).unwrap();
-
-        assert_eq!(actual_output, expected_output);
+        compare(input, expected_output);
     }
 
     #[test]
@@ -247,9 +235,7 @@ mod tests {
         ];
 
         for (input, expect) in tests {
-            let expected_output = vec![expect];
-            let actual_output = lex_input(&input).unwrap();
-            assert_eq!(actual_output, expected_output);
+            compare(input, vec![expect]);
         }
     }
 
@@ -265,9 +251,7 @@ mod tests {
             LexToken::RightBracket,
         ];
 
-        let actual_output = lex_input(&input).unwrap();
-
-        assert_eq!(actual_output, expected_output);
+        compare(input, expected_output);
     }
 
     #[test]
@@ -427,7 +411,11 @@ mod tests {
             LexToken::RightBracket,
         ];
 
-        let actual_output = lex_input(&input).unwrap();
+        compare(input, expected_output);
+    }
+
+    fn compare(input: &str, expected_output: Vec<LexToken>) {
+        let actual_output = lex_input(input).unwrap();
 
         assert_eq!(actual_output, expected_output);
     }
