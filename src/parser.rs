@@ -54,7 +54,12 @@ fn lex_input(input: &str) -> Result<Vec<LexToken>, &'static str> {
 }
 
 fn lex_string(input: &str, from_idx: usize) -> Option<(LexToken, usize)> {
-    if input.chars().nth(from_idx).unwrap() != '"' {
+    if input
+        .chars()
+        .nth(from_idx)
+        .expect("Lexxer skipped past the end of the input")
+        != '"'
+    {
         return None;
     }
 
@@ -71,7 +76,12 @@ fn lex_string(input: &str, from_idx: usize) -> Option<(LexToken, usize)> {
 }
 
 fn lex_left_bracket(input: &str, from_idx: usize) -> Option<(LexToken, usize)> {
-    if input.chars().nth(from_idx).unwrap() != '(' {
+    if input
+        .chars()
+        .nth(from_idx)
+        .expect("Lexxer skipped past the end of the input")
+        != '('
+    {
         return None;
     }
 
@@ -79,7 +89,12 @@ fn lex_left_bracket(input: &str, from_idx: usize) -> Option<(LexToken, usize)> {
 }
 
 fn lex_right_bracket(input: &str, from_idx: usize) -> Option<(LexToken, usize)> {
-    if input.chars().nth(from_idx).unwrap() != ')' {
+    if input
+        .chars()
+        .nth(from_idx)
+        .expect("Lexxer skipped past the end of the input")
+        != ')'
+    {
         return None;
     }
 
@@ -87,7 +102,12 @@ fn lex_right_bracket(input: &str, from_idx: usize) -> Option<(LexToken, usize)> 
 }
 
 fn lex_whitespace(input: &str, from_idx: usize) -> Option<usize> {
-    if input.chars().nth(from_idx).unwrap().is_whitespace() {
+    if input
+        .chars()
+        .nth(from_idx)
+        .expect("Lexxer skipped past the end of the input")
+        .is_whitespace()
+    {
         return Some(from_idx + 1);
     }
 
@@ -95,7 +115,10 @@ fn lex_whitespace(input: &str, from_idx: usize) -> Option<usize> {
 }
 
 fn lex_number(input: &str, from_idx: usize) -> Option<(LexToken, usize)> {
-    let next_char = input.chars().nth(from_idx).unwrap();
+    let next_char = input
+        .chars()
+        .nth(from_idx)
+        .expect("Lexxer skipped past the end of the input");
     if !next_char.is_numeric() && next_char != '-' && next_char != '.' {
         return None;
     }
