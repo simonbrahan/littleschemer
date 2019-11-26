@@ -163,7 +163,7 @@ mod tests {
 
     #[test]
     fn lex_string() {
-        let input = "\"scheme\"";
+        let input = r#""scheme""#;
 
         let expected_output = vec![LexToken::String("scheme".to_string())];
 
@@ -172,7 +172,7 @@ mod tests {
 
     #[test]
     fn lex_list_of_strings() {
-        let input = "(\"little\" \"scheme\")";
+        let input = r#"("little" "scheme")"#;
 
         let expected_output = vec![
             LexToken::LeftBracket,
@@ -186,7 +186,7 @@ mod tests {
 
     #[test]
     fn lex_list_of_strings_with_whitespace() {
-        let input = "  (  \"little\"   \"scheme\"  )  ";
+        let input = r#"  (  "little"   "scheme"  )  "#;
 
         let expected_output = vec![
             LexToken::LeftBracket,
@@ -256,7 +256,7 @@ mod tests {
 
     #[test]
     fn lex_fizzbuzz() {
-        let input = "
+        let input = r#"
         (define (fizzable num) (= 0 (modulo num 3)))
         (define (buzzable num) (= 0 (modulo num 5)))
 
@@ -264,9 +264,9 @@ mod tests {
           (let ((isFizzable (fizzable num))
                 (isBuzzable (buzzable num)))
             (cond
-              ((and isFizzable isBuzzable) \"fizzbuzz\")
-              (isFizzable \"fizz\")
-              (isBuzzable \"buzz\")
+              ((and isFizzable isBuzzable) "fizzbuzz")
+              (isFizzable "fizz")
+              (isBuzzable "buzz")
               (#t (number->string num)))))
 
         (define (fizzbuzzrange fromnum tonum)
@@ -277,7 +277,7 @@ mod tests {
             (fizzbuzzrange (+ fromnum 1) tonum)))
 
         (fizzbuzzrange 1 100)
-        ";
+        "#;
 
         let expected_output = vec![
             // fizzable
