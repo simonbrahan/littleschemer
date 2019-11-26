@@ -8,7 +8,7 @@ fn main() {
     loop {
         let input = get_input();
 
-        println!("{}", input);
+        println!("{:?}", parser::lex_input(&input));
     }
 }
 

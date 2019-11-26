@@ -1,5 +1,5 @@
 #[derive(Debug, PartialEq)]
-enum LexToken {
+pub enum LexToken {
     Num(f64),
     Symbol(String),
     String(String),
@@ -7,7 +7,7 @@ enum LexToken {
     RightBracket,
 }
 
-fn lex_input(input: &str) -> Result<Vec<LexToken>, &'static str> {
+pub fn lex_input(input: &str) -> Result<Vec<LexToken>, &'static str> {
     let mut output = Vec::new();
 
     let input_length = input.len();
