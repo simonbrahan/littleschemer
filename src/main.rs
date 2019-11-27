@@ -1,6 +1,6 @@
 use std::io::{self, Write};
 
-mod parser;
+mod lexer;
 
 fn main() {
     println!("Little Scheme In Rust");
@@ -8,7 +8,7 @@ fn main() {
     loop {
         let input = get_input();
 
-        println!("{:?}", parser::lex_input(&input));
+        println!("{:?}", lexer::lex_input(&input));
     }
 }
 
