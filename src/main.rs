@@ -1,6 +1,7 @@
 use std::io::{self, Write};
 
 mod lexer;
+mod parser;
 
 fn main() {
     println!("Little Scheme In Rust");
