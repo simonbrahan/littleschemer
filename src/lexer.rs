@@ -53,13 +53,16 @@ pub fn lex_input(input: &str) -> Result<Vec<LexToken>, &'static str> {
     Ok(output)
 }
 
-fn lex_string(input: &str, from_idx: usize) -> Option<(LexToken, usize)> {
-    if input
+fn char_is(input: &str, idx: usize, look_for: char) -> bool {
+    input
         .chars()
-        .nth(from_idx)
+        .nth(idx)
         .expect("Lexxer skipped past the end of the input")
-        != '"'
-    {
+        == look_for
+}
+
+fn lex_string(input: &str, from_idx: usize) -> Option<(LexToken, usize)> {
+    if !char_is(input, from_idx, '"') {
         return None;
     }
 
@@ -76,12 +79,7 @@ fn lex_string(input: &str, from_idx: usize) -> Option<(LexToken, usize)> {
 }
 
 fn lex_left_bracket(input: &str, from_idx: usize) -> Option<(LexToken, usize)> {
-    if input
-        .chars()
-        .nth(from_idx)
-        .expect("Lexxer skipped past the end of the input")
-        != '('
-    {
+    if !char_is(input, from_idx, '(') {
         return None;
     }
 
@@ -89,12 +87,7 @@ fn lex_left_bracket(input: &str, from_idx: usize) -> Option<(LexToken, usize)> {
 }
 
 fn lex_right_bracket(input: &str, from_idx: usize) -> Option<(LexToken, usize)> {
-    if input
-        .chars()
-        .nth(from_idx)
-        .expect("Lexxer skipped past the end of the input")
-        != ')'
-    {
+    if !char_is(input, from_idx, ')') {
         return None;
     }
 
