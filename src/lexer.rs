@@ -7,45 +7,82 @@ pub enum LexToken {
     RightBracket,
 }
 
+struct InputBuffer<'a> {
+    input: &'a str,
+    current_idx: usize,
+}
+
+impl InputBuffer<'_> {
+    fn from_input(input: &str) -> InputBuffer {
+        InputBuffer {
+            input,
+            current_idx: 0,
+        }
+    }
+
+    fn has_chars_remaining(&self) -> bool {
+        self.input.chars().count() > self.current_idx
+    }
+
+    fn next_char_is(&self, look_for: fn(char) -> bool) -> bool {
+        let next_char = self
+            .input
+            .chars()
+            .nth(self.current_idx)
+            .expect("Lexxer skipped past the end of the input");
+
+        look_for(next_char)
+    }
+
+    fn skip(&mut self, num_chars_to_skip: usize) {
+        self.current_idx += num_chars_to_skip;
+    }
+
+    fn take_while(&mut self, look_for: for<'r> fn(&'r char) -> bool) -> String {
+        let output = self
+            .input
+            .chars()
+            .skip(self.current_idx)
+            .take_while(look_for)
+            .collect::<String>();
+
+        self.current_idx += output.chars().count();
+
+        output
+    }
+}
+
 pub fn lex_input(input: &str) -> Result<Vec<LexToken>, &'static str> {
+    let mut input_buffer = InputBuffer::from_input(input);
     let mut output = Vec::new();
 
-    let input_length = input.len();
-    let mut current_idx = 0;
-
-    while current_idx < input_length {
-        if let Some((lexed_string, new_idx)) = lex_string(&input, current_idx) {
+    while input_buffer.has_chars_remaining() {
+        if let Some(lexed_string) = lex_string(&mut input_buffer) {
             output.push(lexed_string);
-            current_idx = new_idx;
             continue;
         }
 
-        if let Some((lexed_number, new_idx)) = lex_number(&input, current_idx) {
+        if let Some(lexed_number) = lex_number(&mut input_buffer) {
             output.push(lexed_number);
-            current_idx = new_idx;
             continue;
         }
 
-        if let Some((lexed_left_bracket, new_idx)) = lex_left_bracket(&input, current_idx) {
+        if let Some(lexed_left_bracket) = lex_left_bracket(&mut input_buffer) {
             output.push(lexed_left_bracket);
-            current_idx = new_idx;
             continue;
         }
 
-        if let Some((lexed_right_bracket, new_idx)) = lex_right_bracket(&input, current_idx) {
+        if let Some(lexed_right_bracket) = lex_right_bracket(&mut input_buffer) {
             output.push(lexed_right_bracket);
-            current_idx = new_idx;
             continue;
         }
 
-        if let Some(new_idx) = lex_whitespace(&input, current_idx) {
-            current_idx = new_idx;
+        if lex_whitespace(&mut input_buffer) {
             continue;
         }
 
-        if let Some((lexed_symbol, new_idx)) = lex_symbol(&input, current_idx) {
+        if let Some(lexed_symbol) = lex_symbol(&mut input_buffer) {
             output.push(lexed_symbol);
-            current_idx = new_idx;
             continue;
         }
     }
@@ -53,86 +90,67 @@ pub fn lex_input(input: &str) -> Result<Vec<LexToken>, &'static str> {
     Ok(output)
 }
 
-fn char_is(input: &str, idx: usize, look_for: fn(char) -> bool) -> bool {
-    let next_char = input
-        .chars()
-        .nth(idx)
-        .expect("Lexxer skipped past the end of the input");
-
-    look_for(next_char)
-}
-
-fn lex_string(input: &str, from_idx: usize) -> Option<(LexToken, usize)> {
-    if !char_is(input, from_idx, |next| next == '"') {
+fn lex_string(input: &mut InputBuffer) -> Option<LexToken> {
+    if !input.next_char_is(|char| char == '"') {
         return None;
     }
 
-    let output = input
-        .chars()
-        .skip(from_idx + 1)
-        .take_while(|&char| char != '"')
-        .collect::<String>();
+    input.skip(1);
+    let output = input.take_while(|char| *char != '"');
+    input.skip(1);
 
-    Some((
-        LexToken::String(output.to_string()),
-        from_idx + output.len() + 2,
-    ))
+    Some(LexToken::String(output))
 }
 
-fn lex_left_bracket(input: &str, from_idx: usize) -> Option<(LexToken, usize)> {
-    if !char_is(input, from_idx, |next| next == '(') {
+fn lex_left_bracket(input: &mut InputBuffer) -> Option<LexToken> {
+    if !input.next_char_is(|char| char == '(') {
         return None;
     }
 
-    Some((LexToken::LeftBracket, from_idx + 1))
+    input.skip(1);
+
+    Some(LexToken::LeftBracket)
 }
 
-fn lex_right_bracket(input: &str, from_idx: usize) -> Option<(LexToken, usize)> {
-    if !char_is(input, from_idx, |next| next == ')') {
+fn lex_right_bracket(input: &mut InputBuffer) -> Option<LexToken> {
+    if !input.next_char_is(|char| char == ')') {
         return None;
     }
 
-    Some((LexToken::RightBracket, from_idx + 1))
+    input.skip(1);
+
+    Some(LexToken::RightBracket)
 }
 
-fn lex_whitespace(input: &str, from_idx: usize) -> Option<usize> {
-    if char_is(input, from_idx, |next| next.is_whitespace()) {
-        return Some(from_idx + 1);
+fn lex_whitespace(input: &mut InputBuffer) -> bool {
+    if input.next_char_is(|char| char.is_whitespace()) {
+        input.skip(1);
+        return true;
     }
 
-    None
+    false
 }
 
-fn lex_number(input: &str, from_idx: usize) -> Option<(LexToken, usize)> {
-    let numeric = |char: char| char.is_numeric() || char == '.' || char == 'e' || char == '-';
-
-    if !char_is(input, from_idx, numeric) {
+fn lex_number(input: &mut InputBuffer) -> Option<LexToken> {
+    if !input.next_char_is(|char| char.is_numeric() || char == '.' || char == 'e' || char == '-') {
         return None;
     }
 
-    let num_as_string = input
-        .chars()
-        .skip(from_idx)
-        .take_while(|&char| numeric(char))
-        .collect::<String>();
+    let num_as_string =
+        input.take_while(|char| char.is_numeric() || *char == '.' || *char == 'e' || *char == '-');
 
     match num_as_string.parse::<f64>() {
-        Ok(num) => Some((LexToken::Num(num), from_idx + num_as_string.len())),
+        Ok(num) => Some(LexToken::Num(num)),
         Err(_) => None,
     }
 }
 
-fn lex_symbol(input: &str, from_idx: usize) -> Option<(LexToken, usize)> {
-    let output = input
-        .chars()
-        .skip(from_idx)
-        .take_while(|&char| !char.is_whitespace() && char != '(' && char != ')')
-        .collect::<String>();
+fn lex_symbol(input: &mut InputBuffer) -> Option<LexToken> {
+    let output = input.take_while(|char| !char.is_whitespace() && *char != '(' && *char != ')');
 
-    Some((
-        LexToken::Symbol(output.to_string()),
-        from_idx + output.len(),
-    ))
+    dbg!(&output);
+
+    Some(LexToken::Symbol(output))
 }
 
 #[cfg(test)]
@@ -217,8 +235,9 @@ mod tests {
     fn lex_symbol() {
         let tests = vec![
             ("some_func", LexToken::Symbol("some_func".to_string())),
-            ("-", LexToken::Symbol("-".to_string())),
-            ("e", LexToken::Symbol("e".to_string())),
+            ("+", LexToken::Symbol("+".to_string())),
+            (",", LexToken::Symbol(",".to_string())),
+            ("#symbol", LexToken::Symbol("#symbol".to_string())),
         ];
 
         for (input, expect) in tests {
@@ -228,13 +247,13 @@ mod tests {
 
     #[test]
     fn lex_list_of_symbols() {
-        let input = "(somefunc #some_symbol -)";
+        let input = "(somefunc #some_symbol +)";
 
         let expected_output = vec![
             LexToken::LeftBracket,
             LexToken::Symbol("somefunc".to_string()),
             LexToken::Symbol("#some_symbol".to_string()),
-            LexToken::Symbol("-".to_string()),
+            LexToken::Symbol("+".to_string()),
             LexToken::RightBracket,
         ];
 
