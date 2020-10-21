@@ -39,16 +39,19 @@ impl InputBuffer<'_> {
     }
 
     fn take_while(&mut self, look_for: for<'r> fn(&'r char) -> bool) -> String {
-        let output = self
-            .input
+        let output = self.read_while(look_for);
+
+        self.skip(output.chars().count());
+
+        output
+    }
+
+    fn read_while(&self, look_for: for<'r> fn(&'r char) -> bool) -> String {
+        self.input
             .chars()
             .skip(self.current_idx)
             .take_while(look_for)
-            .collect::<String>();
-
-        self.current_idx += output.chars().count();
-
-        output
+            .collect::<String>()
     }
 }
 
@@ -137,18 +140,19 @@ fn lex_number(input: &mut InputBuffer) -> Option<LexToken> {
     }
 
     let num_as_string =
-        input.take_while(|char| char.is_numeric() || *char == '.' || *char == 'e' || *char == '-');
+        input.read_while(|char| char.is_numeric() || *char == '.' || *char == 'e' || *char == '-');
 
     match num_as_string.parse::<f64>() {
-        Ok(num) => Some(LexToken::Num(num)),
+        Ok(num) => {
+            input.skip(num_as_string.chars().count());
+            Some(LexToken::Num(num))
+        }
         Err(_) => None,
     }
 }
 
 fn lex_symbol(input: &mut InputBuffer) -> Option<LexToken> {
     let output = input.take_while(|char| !char.is_whitespace() && *char != '(' && *char != ')');
-
-    dbg!(&output);
 
     Some(LexToken::Symbol(output))
 }
@@ -237,6 +241,8 @@ mod tests {
             ("some_func", LexToken::Symbol("some_func".to_string())),
             ("+", LexToken::Symbol("+".to_string())),
             (",", LexToken::Symbol(",".to_string())),
+            ("-", LexToken::Symbol("-".to_string())),
+            ("e", LexToken::Symbol("e".to_string())),
             ("#symbol", LexToken::Symbol("#symbol".to_string())),
         ];
 
