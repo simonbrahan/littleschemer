@@ -46,6 +46,18 @@ impl InputBuffer<'_> {
         output
     }
 
+    fn take_next(&mut self) -> char {
+        let output = self
+            .input
+            .chars()
+            .nth(self.current_idx)
+            .expect("Lexxer skipped past the end of the input");
+
+        self.skip(1);
+
+        output
+    }
+
     fn read_while(&self, look_for: for<'r> fn(&'r char) -> bool) -> String {
         self.input
             .chars()
@@ -99,8 +111,25 @@ fn lex_string(input: &mut InputBuffer) -> Option<LexToken> {
     }
 
     input.skip(1);
-    let output = input.take_while(|char| *char != '"');
-    input.skip(1);
+
+    let mut output = String::from("");
+    let mut escape_next_char = false;
+    loop {
+        let next_char = input.take_next();
+
+        if next_char == '\"' && !escape_next_char {
+            break;
+        }
+
+        if next_char == '\\' && !escape_next_char {
+            escape_next_char = true;
+            continue;
+        }
+
+        escape_next_char = false;
+
+        output.push(next_char);
+    }
 
     Some(LexToken::String(output))
 }
@@ -172,11 +201,41 @@ mod tests {
 
     #[test]
     fn lex_string() {
-        let input = r#""scheme""#;
+        let tests = vec![
+            (r#""scheme""#, LexToken::String("scheme".to_string())),
+            (
+                r#""little schemer""#,
+                LexToken::String("little schemer".to_string()),
+            ),
+            (
+                r#""\" double quote at start""#,
+                LexToken::String("\" double quote at start".to_string()),
+            ),
+            (
+                r#""double quote \" in middle""#,
+                LexToken::String("double quote \" in middle".to_string()),
+            ),
+            (
+                r#""double quote at end \"""#,
+                LexToken::String("double quote at end \"".to_string()),
+            ),
+            (
+                r#""\\ backslash at start""#,
+                LexToken::String("\\ backslash at start".to_string()),
+            ),
+            (
+                r#""backslash \\ in middle""#,
+                LexToken::String("backslash \\ in middle".to_string()),
+            ),
+            (
+                r#""backslash at end \\""#,
+                LexToken::String("backslash at end \\".to_string()),
+            ),
+        ];
 
-        let expected_output = vec![LexToken::String("scheme".to_string())];
-
-        compare(input, expected_output);
+        for (input, expect) in tests {
+            compare(input, vec![expect]);
+        }
     }
 
     #[test]
